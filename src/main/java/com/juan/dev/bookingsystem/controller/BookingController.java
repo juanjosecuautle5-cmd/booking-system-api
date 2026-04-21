@@ -1,7 +1,9 @@
 package com.juan.dev.bookingsystem.controller;
 
-import com.juan.dev.bookingsystem.model.Booking;
+import com.juan.dev.bookingsystem.dto.BookingRequest;
+import com.juan.dev.bookingsystem.dto.BookingResponse;
 import com.juan.dev.bookingsystem.service.BookingService;
+
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,13 +19,15 @@ public class BookingController {
         this.bookingService = bookingService;
     }
 
+    // ✅ CREATE con DTO
     @PostMapping
-    public Booking createBooking(@Valid @RequestBody Booking booking) {
-        return bookingService.createBooking(booking);
+    public BookingResponse createBooking(@Valid @RequestBody BookingRequest request) {
+        return bookingService.createBooking(request);
     }
 
+    // ✅ GET ALL con DTO
     @GetMapping
-    public List<Booking> getAll() {
+    public List<BookingResponse> getAll() {
         return bookingService.getAllBookings();
     }
 }

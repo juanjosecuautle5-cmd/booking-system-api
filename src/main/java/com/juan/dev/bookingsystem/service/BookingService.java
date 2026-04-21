@@ -1,5 +1,7 @@
 package com.juan.dev.bookingsystem.service;
 
+import com.juan.dev.bookingsystem.dto.BookingRequest;
+import com.juan.dev.bookingsystem.dto.BookingResponse;
 import com.juan.dev.bookingsystem.model.Booking;
 import com.juan.dev.bookingsystem.model.Room;
 import com.juan.dev.bookingsystem.repository.BookingRepository;
@@ -8,6 +10,7 @@ import com.juan.dev.bookingsystem.repository.RoomRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
@@ -20,46 +23,62 @@ public class BookingService {
         this.roomRepository = roomRepository;
     }
 
-    public Booking createBooking(Booking booking) {
+    // ✅ CREATE con DTOs
+    public BookingResponse createBooking(BookingRequest request) {
 
-        // 🔥 0. Validar que venga la habitación
-        if (booking.getRoom() == null || booking.getRoom().getId() == null) {
-            throw new RuntimeException("Room is required");
-        }
-
-        // 🔥 1. Validar que exista
-        Room room = roomRepository.findById(booking.getRoom().getId())
+        // 🔥 1. Validar habitación
+        Room room = roomRepository.findById(request.getRoomId())
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
-        // 🔥 2. Validar fechas NULL (esto te faltaba ⚠️)
-        if (booking.getCheckIn() == null || booking.getCheckOut() == null) {
+        // 🔥 2. Validar fechas null
+        if (request.getCheckIn() == null || request.getCheckOut() == null) {
             throw new RuntimeException("Dates are required");
         }
 
-        // 🔥 3. Validar orden de fechas (mejor con isAfter)
-        if (!booking.getCheckOut().isAfter(booking.getCheckIn())) {
+        // 🔥 3. Validar orden
+        if (!request.getCheckOut().isAfter(request.getCheckIn())) {
             throw new RuntimeException("Check-out must be after check-in");
         }
 
         // 🔥 4. Validar conflictos
-        List<Booking> conflicts = bookingRepository
+        var conflicts = bookingRepository
                 .findByRoomIdAndCheckOutAfterAndCheckInBefore(
-                        room.getId(),
-                        booking.getCheckIn(),
-                        booking.getCheckOut()
+                        request.getRoomId(),
+                        request.getCheckIn(),
+                        request.getCheckOut()
                 );
 
         if (!conflicts.isEmpty()) {
             throw new RuntimeException("Room is not available for selected dates");
         }
 
-        // 🔥 5. Asignar room validada
+        // 🔥 5. Crear entidad
+        Booking booking = new Booking();
+        booking.setCheckIn(request.getCheckIn());
+        booking.setCheckOut(request.getCheckOut());
         booking.setRoom(room);
 
-        return bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+
+        // 🔥 6. Responder DTO
+        return new BookingResponse(
+                saved.getId(),
+                saved.getCheckIn(),
+                saved.getCheckOut(),
+                room.getId()
+        );
     }
 
-    public List<Booking> getAllBookings() {
-        return bookingRepository.findAll();
+    // ✅ GET ALL con DTOs
+    public List<BookingResponse> getAllBookings() {
+        return bookingRepository.findAll()
+                .stream()
+                .map(booking -> new BookingResponse(
+                        booking.getId(),
+                        booking.getCheckIn(),
+                        booking.getCheckOut(),
+                        booking.getRoom().getId()
+                ))
+                .collect(Collectors.toList());
     }
 }
