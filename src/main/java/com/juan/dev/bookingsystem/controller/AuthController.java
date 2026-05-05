@@ -3,7 +3,6 @@ package com.juan.dev.bookingsystem.controller;
 import com.juan.dev.bookingsystem.dto.AuthRequest;
 import com.juan.dev.bookingsystem.dto.AuthResponse;
 import com.juan.dev.bookingsystem.service.AuthService;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,10 +23,15 @@ public class AuthController {
         return ResponseEntity.ok("User registered");
     }
 
-    // 🔥 LOGIN
+    // 🔐 LOGIN
     @PostMapping("/login")
     public AuthResponse login(@RequestBody AuthRequest request) {
-        String token = authService.login(request);
-        return new AuthResponse(token);
+        return authService.login(request);
+    }
+
+    // 🔄 REFRESH TOKEN
+    @PostMapping("/refresh")
+    public AuthResponse refresh(@RequestParam String refreshToken) {
+        return authService.refresh(refreshToken);
     }
 }
