@@ -4,6 +4,7 @@ import com.juan.dev.bookingsystem.dto.AuthRequest;
 import com.juan.dev.bookingsystem.dto.AuthResponse;
 import com.juan.dev.bookingsystem.service.AuthService;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,17 +19,15 @@ public class AuthController {
 
     // 🔥 REGISTER
     @PostMapping("/register")
-    public String register(@RequestBody AuthRequest request) {
+    public ResponseEntity<String> register(@RequestBody AuthRequest request) {
         authService.register(request);
-        return "User registered successfully";
+        return ResponseEntity.ok("User registered");
     }
 
-    // 🔥 LOGIN (JWT)
+    // 🔥 LOGIN
     @PostMapping("/login")
     public AuthResponse login(@RequestBody AuthRequest request) {
-
         String token = authService.login(request);
-
         return new AuthResponse(token);
     }
 }

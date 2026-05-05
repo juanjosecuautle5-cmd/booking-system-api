@@ -16,16 +16,23 @@ public class JwtService {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
     }
 
-    public String generateToken(String email) {
+    // 🔥 NUEVO: token con ROLE
+    public String generateToken(String email, String role) {
         return Jwts.builder()
                 .setSubject(email)
+                .claim("role", role) // 👈 AQUÍ guardamos el rol
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // 🔥 ya lo tenías
+    // 🔥 OPCIONAL (puedes eliminar el viejo si quieres)
+    public String generateToken(String email) {
+        return generateToken(email, "USER");
+    }
+
+    // 🔥 EXTRAER EMAIL
     public String extractEmail(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSignKey())
@@ -35,16 +42,27 @@ public class JwtService {
                 .getSubject();
     }
 
+    // 🔥 NUEVO: EXTRAER ROLE
+    public String extractRole(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSignKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("role", String.class);
+    }
+
     // 🔥 adaptador para el filtro
     public String extractUsername(String token) {
         return extractEmail(token);
     }
 
-    // 🔥 adaptador para el filtro
+    // 🔥 validar token con email
     public boolean isTokenValid(String token, String email) {
         return extractEmail(token).equals(email) && isValid(token);
     }
 
+    // 🔥 validar token general
     public boolean isValid(String token) {
         try {
             Jwts.parserBuilder()
