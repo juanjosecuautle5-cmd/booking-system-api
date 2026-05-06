@@ -21,6 +21,9 @@ public class Room {
 
     private boolean available;
 
+    // 🔥 SOFT DELETE
+    private boolean active = true;
+
     // Constructor vacío
     public Room() {}
 
@@ -38,4 +41,8 @@ public class Room {
 
     public boolean isAvailable() { return available; }
     public void setAvailable(boolean available) { this.available = available; }
+
+    // 🔥 NUEVO
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
 }

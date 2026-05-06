@@ -4,6 +4,7 @@ import com.juan.dev.bookingsystem.model.RefreshToken;
 import com.juan.dev.bookingsystem.model.User;
 import com.juan.dev.bookingsystem.repository.RefreshTokenRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -37,5 +38,11 @@ public class RefreshTokenService {
         }
 
         return refreshToken;
+    }
+
+    // 🧹 DELETE (LOGOUT)
+    @Transactional
+    public void delete(String tokenValue) {
+        refreshTokenRepository.deleteByToken(tokenValue);
     }
 }

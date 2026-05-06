@@ -5,7 +5,7 @@ import com.juan.dev.bookingsystem.service.RoomService;
 
 import jakarta.validation.Valid;
 
-import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORTANTE
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

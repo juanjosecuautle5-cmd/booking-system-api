@@ -67,20 +67,35 @@ public class AuthService {
         );
     }
 
-    // 🔄 REFRESH TOKEN
+    // 🔄 REFRESH TOKEN (CON ROTACIÓN 🔥)
     public AuthResponse refresh(String refreshToken) {
 
-        // validar refresh token
+        // 1. validar token actual
         RefreshToken token = refreshTokenService.validate(refreshToken);
 
         User user = token.getUser();
 
-        // generar nuevo access token
+        // 2. eliminar token viejo
+        refreshTokenService.delete(refreshToken);
+
+        // 3. generar nuevo refresh token
+        RefreshToken newRefreshToken = refreshTokenService.create(user);
+
+        // 4. generar nuevo access token
         String newAccessToken = jwtService.generateToken(
                 user.getEmail(),
                 user.getRole().name()
         );
 
-        return new AuthResponse(newAccessToken, refreshToken);
+        // 5. devolver ambos nuevos
+        return new AuthResponse(
+                newAccessToken,
+                newRefreshToken.getToken()
+        );
+    }
+
+    // 🚪 LOGOUT
+    public void logout(String refreshToken) {
+        refreshTokenService.delete(refreshToken);
     }
 }

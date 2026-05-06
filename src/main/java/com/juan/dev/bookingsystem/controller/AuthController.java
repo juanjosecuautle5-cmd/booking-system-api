@@ -34,4 +34,11 @@ public class AuthController {
     public AuthResponse refresh(@RequestParam String refreshToken) {
         return authService.refresh(refreshToken);
     }
+
+    // 🚪 LOGOUT
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestParam String refreshToken) {
+        authService.logout(refreshToken);
+        return ResponseEntity.ok("Logged out successfully");
+    }
 }
