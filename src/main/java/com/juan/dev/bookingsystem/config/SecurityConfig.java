@@ -3,7 +3,7 @@ package com.juan.dev.bookingsystem.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity; // 🔥 IMPORTANTE
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -17,9 +17,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
+    private final RateLimitFilter rateLimitFilter;
 
-    public SecurityConfig(JwtFilter jwtFilter) {
+    // 🔥 CONSTRUCTOR
+    public SecurityConfig(JwtFilter jwtFilter,
+                          RateLimitFilter rateLimitFilter) {
+
         this.jwtFilter = jwtFilter;
+        this.rateLimitFilter = rateLimitFilter;
     }
 
     @Bean
@@ -31,12 +36,21 @@ public class SecurityConfig {
 
             // 🔐 Reglas de seguridad
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll() // login, register, refresh, logout
-                .anyRequest().authenticated() // todo lo demás requiere token
+                .requestMatchers("/auth/**").permitAll()
+                .anyRequest().authenticated()
             )
 
-            // 🔥 Filtro JWT antes del filtro de Spring
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            // 🔥 RATE LIMIT FILTER
+            .addFilterBefore(
+                rateLimitFilter,
+                UsernamePasswordAuthenticationFilter.class
+            )
+
+            // 🔥 JWT FILTER
+            .addFilterBefore(
+                jwtFilter,
+                UsernamePasswordAuthenticationFilter.class
+            );
 
         return http.build();
     }

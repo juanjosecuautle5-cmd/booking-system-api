@@ -1,10 +1,9 @@
 package com.juan.dev.bookingsystem.service;
 
+import com.juan.dev.bookingsystem.annotation.Auditable;
 import com.juan.dev.bookingsystem.model.Room;
 import com.juan.dev.bookingsystem.repository.RoomRepository;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,33 +12,15 @@ import java.util.List;
 public class RoomService {
 
     private final RoomRepository roomRepository;
-    private final AuditService auditService;
 
-    public RoomService(RoomRepository roomRepository,
-                       AuditService auditService) {
+    public RoomService(RoomRepository roomRepository) {
         this.roomRepository = roomRepository;
-        this.auditService = auditService;
     }
 
-    // 🔥 CREATE ROOM + AUDIT
+    // 🔥 CREATE ROOM
+    @Auditable("CREATE_ROOM")
     public Room createRoom(Room room) {
-
-        Room savedRoom = roomRepository.save(room);
-
-        // 🔥 OBTENER USUARIO ACTUAL
-        Authentication auth = SecurityContextHolder
-                .getContext()
-                .getAuthentication();
-
-        String email = auth.getName();
-
-        // 🔥 AUDITORÍA
-        auditService.log(
-                email,
-                "Created room: " + savedRoom.getName()
-        );
-
-        return savedRoom;
+        return roomRepository.save(room);
     }
 
     // 🔥 SOLO activas
@@ -47,6 +28,7 @@ public class RoomService {
         return roomRepository.findByActiveTrue();
     }
 
+    // 🔥 GET ROOM
     public Room getRoomById(Long id) {
 
         Room room = roomRepository.findById(id)
@@ -59,7 +41,8 @@ public class RoomService {
         return room;
     }
 
-    // 🔥 UPDATE ROOM + AUDIT
+    // 🔥 UPDATE ROOM
+    @Auditable("UPDATE_ROOM")
     public Room updateRoom(Long id, Room updatedRoom) {
 
         return roomRepository.findById(id)
@@ -74,27 +57,13 @@ public class RoomService {
                     room.setPrice(updatedRoom.getPrice());
                     room.setAvailable(updatedRoom.isAvailable());
 
-                    Room savedRoom = roomRepository.save(room);
-
-                    // 🔥 OBTENER USUARIO ACTUAL
-                    Authentication auth = SecurityContextHolder
-                            .getContext()
-                            .getAuthentication();
-
-                    String email = auth.getName();
-
-                    // 🔥 AUDITORÍA
-                    auditService.log(
-                            email,
-                            "Updated room: " + savedRoom.getName()
-                    );
-
-                    return savedRoom;
+                    return roomRepository.save(room);
                 })
                 .orElseThrow(() -> new RuntimeException("Room not found"));
     }
 
-    // 🔥 SOFT DELETE + AUDIT
+    // 🔥 SOFT DELETE
+    @Auditable("DELETE_ROOM")
     public void deleteRoom(Long id) {
 
         Room room = roomRepository.findById(id)
@@ -103,18 +72,5 @@ public class RoomService {
         room.setActive(false);
 
         roomRepository.save(room);
-
-        // 🔥 OBTENER USUARIO ACTUAL
-        Authentication auth = SecurityContextHolder
-                .getContext()
-                .getAuthentication();
-
-        String email = auth.getName();
-
-        // 🔥 AUDITORÍA
-        auditService.log(
-                email,
-                "Deleted room: " + room.getName()
-        );
     }
 }
