@@ -9,6 +9,8 @@ import com.juan.dev.bookingsystem.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class AuthService {
 
@@ -42,7 +44,7 @@ public class AuthService {
         userRepository.save(user);
     }
 
-    // 🔐 LOGIN CON ACCESS + REFRESH
+    // 🔐 LOGIN CON ACCESS + REFRESH (CON PERMISOS 🔥)
     public AuthResponse login(AuthRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())
@@ -52,14 +54,22 @@ public class AuthService {
             throw new RuntimeException("Invalid credentials");
         }
 
-        // Access Token (JWT)
+        // 🔥 EXTRAER PERMISOS DEL ROLE
+        List<String> permissions = user.getRole()
+                .getPermissions()
+                .stream()
+                .map(Enum::name)
+                .toList();
+
+        // 🔥 ACCESS TOKEN CON PERMISOS
         String accessToken = jwtService.generateToken(
                 user.getEmail(),
-                user.getRole().name()
+                user.getRole().name(),
+                permissions
         );
 
-        // Refresh Token (DB)
-        var refreshToken = refreshTokenService.create(user);
+        // 🔥 REFRESH TOKEN
+        RefreshToken refreshToken = refreshTokenService.create(user);
 
         return new AuthResponse(
                 accessToken,
@@ -67,7 +77,7 @@ public class AuthService {
         );
     }
 
-    // 🔄 REFRESH TOKEN (CON ROTACIÓN 🔥)
+    // 🔄 REFRESH TOKEN (ROTACIÓN + PERMISOS)
     public AuthResponse refresh(String refreshToken) {
 
         // 1. validar token actual
@@ -81,10 +91,18 @@ public class AuthService {
         // 3. generar nuevo refresh token
         RefreshToken newRefreshToken = refreshTokenService.create(user);
 
-        // 4. generar nuevo access token
+        // 🔥 EXTRAER PERMISOS DEL ROLE
+        List<String> permissions = user.getRole()
+                .getPermissions()
+                .stream()
+                .map(Enum::name)
+                .toList();
+
+        // 🔥 NUEVO ACCESS TOKEN CON PERMISOS
         String newAccessToken = jwtService.generateToken(
                 user.getEmail(),
-                user.getRole().name()
+                user.getRole().name(),
+                permissions
         );
 
         // 5. devolver ambos nuevos

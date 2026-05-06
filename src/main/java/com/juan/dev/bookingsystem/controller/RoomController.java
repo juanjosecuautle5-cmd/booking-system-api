@@ -20,37 +20,38 @@ public class RoomController {
         this.roomService = roomService;
     }
 
-    // 🔥 SOLO ADMIN puede crear
+    // 🔥 CREATE ROOM
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROOM_CREATE')")
     public Room createRoom(@Valid @RequestBody Room room) {
         return roomService.createRoom(room);
     }
 
-    // 🔥 USER y ADMIN pueden ver todos
+    // 🔥 GET ALL ROOMS
     @GetMapping
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('ROOM_READ')")
     public List<Room> getAllRooms() {
         return roomService.getAllRooms();
     }
 
-    // 🔥 USER y ADMIN pueden ver por id
+    // 🔥 GET ROOM BY ID
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('ROOM_READ')")
     public Room getRoomById(@PathVariable Long id) {
         return roomService.getRoomById(id);
     }
 
-    // 🔥 SOLO ADMIN puede actualizar
+    // 🔥 UPDATE ROOM
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public Room updateRoom(@PathVariable Long id, @Valid @RequestBody Room room) {
+    @PreAuthorize("hasAuthority('ROOM_UPDATE')")
+    public Room updateRoom(@PathVariable Long id,
+                           @Valid @RequestBody Room room) {
         return roomService.updateRoom(id, room);
     }
 
-    // 🔥 SOLO ADMIN puede eliminar
+    // 🔥 DELETE ROOM
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROOM_DELETE')")
     public void deleteRoom(@PathVariable Long id) {
         roomService.deleteRoom(id);
     }

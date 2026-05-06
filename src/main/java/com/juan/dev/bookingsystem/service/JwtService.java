@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class JwtService {
@@ -16,43 +17,48 @@ public class JwtService {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
     }
 
-    // 🔥 NUEVO: token con ROLE
-    public String generateToken(String email, String role) {
+    // 🔥 TOKEN CON ROLE + PERMISSIONS
+    public String generateToken(String email, String role, List<String> permissions) {
         return Jwts.builder()
                 .setSubject(email)
-                .claim("role", role) // 👈 AQUÍ guardamos el rol
+                .claim("role", role)
+                .claim("permissions", permissions)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // 🔥 OPCIONAL (puedes eliminar el viejo si quieres)
-    public String generateToken(String email) {
-        return generateToken(email, "USER");
+    // 🔥 OPCIONAL (compatibilidad)
+    public String generateToken(String email, String role) {
+        return generateToken(email, role, List.of());
     }
 
     // 🔥 EXTRAER EMAIL
     public String extractEmail(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSignKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+        return getClaims(token).getSubject();
     }
 
-    // 🔥 NUEVO: EXTRAER ROLE
+    // 🔥 EXTRAER ROLE
     public String extractRole(String token) {
+        return getClaims(token).get("role", String.class);
+    }
+
+    // 🔥 EXTRAER PERMISSIONS
+    public List<String> extractPermissions(String token) {
+        return getClaims(token).get("permissions", List.class);
+    }
+
+    // 🔥 helper central
+    private Claims getClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSignKey())
                 .build()
                 .parseClaimsJws(token)
-                .getBody()
-                .get("role", String.class);
+                .getBody();
     }
 
-    // 🔥 adaptador para el filtro
+    // 🔥 adaptador Spring Security
     public String extractUsername(String token) {
         return extractEmail(token);
     }
@@ -65,10 +71,7 @@ public class JwtService {
     // 🔥 validar token general
     public boolean isValid(String token) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(getSignKey())
-                    .build()
-                    .parseClaimsJws(token);
+            getClaims(token);
             return true;
         } catch (JwtException e) {
             return false;

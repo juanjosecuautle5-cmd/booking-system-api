@@ -33,32 +33,43 @@ public class JwtFilter extends OncePerRequestFilter {
 
         final String header = request.getHeader("Authorization");
 
+        // 🔹 Si no hay token
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
         String token = header.substring(7);
-        String email = jwtService.extractUsername(token);
 
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        // 🔥 EXTRAER EMAIL
+        String email = jwtService.extractEmail(token);
 
+        // 🔹 Evitar sobrescribir autenticación
+        if (email != null &&
+                SecurityContextHolder.getContext().getAuthentication() == null) {
+
+            // 🔥 VALIDAR TOKEN
             if (jwtService.isTokenValid(token, email)) {
 
-                // 🔥 EXTRAER ROLE DEL TOKEN
-                String role = jwtService.extractRole(token);
+                // 🔥 EXTRAER PERMISOS
+                List<String> permissions =
+                        jwtService.extractPermissions(token);
 
-                // 🔥 Spring espera ROLE_USER / ROLE_ADMIN
-                var authority = new SimpleGrantedAuthority("ROLE_" + role);
+                // 🔥 CONVERTIR A AUTHORITIES
+                var authorities = permissions.stream()
+                        .map(SimpleGrantedAuthority::new)
+                        .toList();
 
-                UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(
-                                email,
-                                null,
-                                List.of(authority)
-                        );
+                // 🔥 CREAR AUTH
+                var auth = new UsernamePasswordAuthenticationToken(
+                        email,
+                        null,
+                        authorities
+                );
 
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                // 🔥 SETEAR EN CONTEXTO
+                SecurityContextHolder.getContext()
+                        .setAuthentication(auth);
             }
         }
 
